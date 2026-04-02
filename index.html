@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Academy - 模試ポータル</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
+
+        body {
+            background: radial-gradient(circle at center, #1a1a2e 0%, #0f0f1a 100%);
+            color: #e0e0e0;
+            font-family: 'Noto Sans JP', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+
+        .stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: twinkle var(--duration) infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: #4cc9f0;
+            box-shadow: 0 0 20px rgba(76, 201, 240, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .planet-btn {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            overflow: hidden;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .planet-btn:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .planet-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 0 10px currentColor);
+            z-index: 2;
+        }
+
+        .planet-math { color: #4361ee; background: radial-gradient(circle at 30% 30%, #4361ee, #1e293b); }
+        .planet-science { color: #4cc9f0; background: radial-gradient(circle at 30% 30%, #4cc9f0, #1e293b); }
+        .planet-english { color: #f72585; background: radial-gradient(circle at 30% 30%, #f72585, #1e293b); }
+        .planet-japanese { color: #ff9e00; background: radial-gradient(circle at 30% 30%, #ff9e00, #1e293b); }
+        .planet-social { color: #7209b7; background: radial-gradient(circle at 30% 30%, #7209b7, #1e293b); }
+
+        .planet-ring {
+            position: absolute;
+            width: 140%;
+            height: 40%;
+            border: 4px solid rgba(181, 23, 158, 0.4);
+            border-radius: 50%;
+            transform: rotateX(75deg);
+            z-index: 1;
+        }
+
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 50;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .admin-form {
+            display: none;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-top: 1px dashed rgba(255, 255, 255, 0.2);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="stars" class="stars-container"></div>
+
+    <header class="py-12 px-6 text-center">
+        <h1 class="orbitron text-5xl md:text-7xl font-bold tracking-widest mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-500">
+            SPACE ACADEMY
+        </h1>
+        <p class="text-blue-200 text-lg md:text-xl opacity-80 font-light">知識の銀河を探索し、新たな地平を切り拓け。</p>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 pb-20">
+        <div class="glass-card rounded-2xl p-8 mb-16 text-center border-b-4 border-blue-500/50">
+            <h2 class="text-2xl font-bold mb-4 flex items-center justify-center gap-3">
+                <i class="fas fa-satellite-dish text-blue-400"></i> ミッションコントロール
+            </h2>
+            <p class="opacity-80 font-light">必要な教科の惑星を選択して、模試データを取得してください。</p>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-6 md:gap-8 text-center">
+            <div class="group" onclick="openSubject('英語')">
+                <div class="planet-btn planet-english mb-4 shadow-lg shadow-pink-500/20">
+                    <i class="fas fa-language planet-icon"></i>
+                    <span class="font-bold text-xs orbitron">ENGLISH</span>
+                </div>
+                <h3 class="text-lg font-bold">英語</h3>
+            </div>
+
+            <div class="group" onclick="openSubject('数学')">
+                <div class="planet-btn planet-math mb-4 shadow-lg shadow-blue-500/20">
+                    <i class="fas fa-square-root-variable planet-icon"></i>
+                    <span class="font-bold text-xs orbitron">MATH</span>
+                </div>
+                <h3 class="text-lg font-bold">数学</h3>
+            </div>
+
+            <div class="group" onclick="openSubject('国語')">
+                <div class="planet-btn planet-japanese mb-4 shadow-lg shadow-orange-500/20">
+                    <i class="fas fa-book-open planet-icon"></i>
+                    <span class="font-bold text-xs orbitron">LANG</span>
+                </div>
+                <h3 class="text-lg font-bold">国語</h3>
+            </div>
+
+            <div class="group" onclick="openSubject('理科')">
+                <div class="planet-btn planet-science mb-4 shadow-lg shadow-cyan-500/20">
+                    <i class="fas fa-atom planet-icon"></i>
+                    <span class="font-bold text-xs orbitron">SCIENCE</span>
+                </div>
+                <h3 class="text-lg font-bold">理科</h3>
+            </div>
+
+            <div class="group col-span-2 md:col-span-1" onclick="openSubject('地歴')">
+                <div class="planet-btn planet-social mb-4 shadow-lg shadow-purple-500/20">
+                    <div class="planet-ring"></div>
+                    <i class="fas fa-earth-asia planet-icon"></i>
+                    <span class="font-bold text-xs orbitron">SOCIAL</span>
+                </div>
+                <h3 class="text-lg font-bold">地歴・公民</h3>
+            </div>
+        </div>
+    </main>
+
+    <div id="modal" class="p-4" onclick="closeModal(event)">
+        <div class="glass-card max-w-lg w-full rounded-3xl p-8 border-t-4 relative" id="modal-content" onclick="event.stopPropagation()">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+            
+            <div class="text-center mb-6">
+                <div id="modal-icon" class="text-5xl mb-4"></div>
+                <h2 id="modal-title" class="text-3xl font-bold orbitron tracking-wider">SUBJECT</h2>
+                <p class="text-xs opacity-60 mt-2">DOWNLOAD CENTER</p>
+            </div>
+
+            <div id="pdf-list" class="space-y-4 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
+                <!-- PDF items dynamic -->
+            </div>
+
+            <div class="mt-8 border-t border-white/10 pt-4">
+                <button id="show-admin-btn" onclick="promptAdmin('add')" class="text-[10px] text-white/30 hover:text-white/60 transition flex items-center gap-1 mx-auto orbitron tracking-widest">
+                    <i class="fas fa-plus-circle"></i> ADD NEW DATA
+                </button>
+
+                <div id="admin-area" class="admin-form">
+                    <div class="space-y-3">
+                        <input type="text" id="new-pdf-title" placeholder="試験名を入力（例：第4回 模擬試験）" class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
+                        <input type="text" id="new-pdf-url" placeholder="PDFのURLを入力" class="w-full bg-white/10 border border-white/20 rounded-lg p-2 text-sm focus:outline-none focus:border-blue-500">
+                        <button id="submit-admin-btn" onclick="addOrUpdatePDF()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg text-xs transition uppercase orbitron">
+                            Confirm Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeModal()" class="w-full mt-6 py-3 rounded-xl border border-white/10 hover:bg-white/10 transition text-xs orbitron tracking-widest">
+                BACK
+            </button>
+        </div>
+    </div>
+
+    <footer class="text-center py-12 opacity-30 text-xs">
+        <p class="orbitron tracking-widest">&copy; 2024 SPACE ACADEMY</p>
+    </footer>
+
+    <script>
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 150; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 2 + 1 + 'px';
+            star.style.width = size; star.style.height = size;
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.setProperty('--duration', Math.random() * 3 + 2 + 's');
+            star.style.animationDelay = Math.random() * 5 + 's';
+            starsContainer.appendChild(star);
+        }
+
+        const modal = document.getElementById('modal');
+        const pdfList = document.getElementById('pdf-list');
+        const adminArea = document.getElementById('admin-area');
+        const adminSubmitBtn = document.getElementById('submit-admin-btn');
+        let currentSubject = '';
+        let editingIndex = -1; // -1 means adding, >=0 means editing
+
+        // Data structure changed to objects
+        const examData = {
+            '英語': [{title: '第1回 模擬試験', url: '#'}, {title: '第2回 模擬試験', url: '#'}],
+            '数学': [{title: '第1回 模擬試験', url: '#'}, {title: '第2回 模擬試験', url: '#'}],
+            '国語': [{title: '第1回 模擬試験', url: '#'}, {title: '第2回 模擬試験', url: '#'}],
+            '理科': [{title: '第1回 模擬試験', url: '#'}, {title: '第2回 模擬試験', url: '#'}],
+            '地歴': [{title: '第1回 模擬試験', url: '#'}, {title: '第2回 模擬試験', url: '#'}],
+        };
+
+        const subjects = {
+            '数学': { icon: '<i class="fas fa-square-root-variable text-blue-400"></i>', color: '#4361ee' },
+            '理科': { icon: '<i class="fas fa-atom text-cyan-400"></i>', color: '#4cc9f0' },
+            '英語': { icon: '<i class="fas fa-language text-pink-400"></i>', color: '#f72585' },
+            '国語': { icon: '<i class="fas fa-book-open text-orange-400"></i>', color: '#ff9e00' },
+            '地歴': { icon: '<i class="fas fa-earth-asia text-purple-400"></i>', color: '#7209b7' }
+        };
+
+        function renderPDFList() {
+            pdfList.innerHTML = '';
+            const list = examData[currentSubject] || [];
+            list.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition group";
+                div.innerHTML = `
+                    <div class="flex-1">
+                        <span class="font-bold block">${item.title}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <!-- Edit Button (Hidden by default, shown on group hover/admin) -->
+                        <button onclick="promptAdmin('edit', ${index})" class="text-white/20 hover:text-yellow-400 p-2 transition">
+                            <i class="fas fa-pen text-xs"></i>
+                        </button>
+                        <button onclick="promptAdmin('delete', ${index})" class="text-white/20 hover:text-red-500 p-2 transition">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                        <a href="${item.url}" target="_blank" class="px-4 py-2 bg-blue-600/80 rounded-lg text-sm font-bold hover:bg-blue-500 transition shadow-lg shadow-blue-600/20">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+                `;
+                pdfList.appendChild(div);
+            });
+        }
+
+        function openSubject(name) {
+            currentSubject = name;
+            const subject = subjects[name];
+            document.getElementById('modal-title').innerText = name === '地歴' ? 'SOCIAL' : name.toUpperCase();
+            document.getElementById('modal-icon').innerHTML = subject.icon;
+            document.getElementById('modal-content').style.borderColor = subject.color;
+            
+            adminArea.style.display = 'none';
+            editingIndex = -1;
+            renderPDFList();
+            modal.style.display = 'flex';
+        }
+
+        function promptAdmin(type, index = -1) {
+            const pass = prompt('管理用パスワードを入力してください:');
+            if (pass === '893012') {
+                if (type === 'add') {
+                    editingIndex = -1;
+                    adminArea.style.display = 'block';
+                    adminSubmitBtn.innerText = "Confirm New Data";
+                    document.getElementById('new-pdf-title').value = '';
+                    document.getElementById('new-pdf-url').value = '';
+                } else if (type === 'edit') {
+                    editingIndex = index;
+                    adminArea.style.display = 'block';
+                    adminSubmitBtn.innerText = "Update Existing Data";
+                    const item = examData[currentSubject][index];
+                    document.getElementById('new-pdf-title').value = item.title;
+                    document.getElementById('new-pdf-url').value = item.url;
+                } else if (type === 'delete') {
+                    if(confirm('このデータを削除してもよろしいですか？')) {
+                        examData[currentSubject].splice(index, 1);
+                        renderPDFList();
+                    }
+                }
+            } else if (pass !== null) {
+                alert('認証に失敗しました。');
+            }
+        }
+
+        function addOrUpdatePDF() {
+            const title = document.getElementById('new-pdf-title').value;
+            const url = document.getElementById('new-pdf-url').value || '#';
+            
+            if (!title) {
+                alert('タイトルを入力してください');
+                return;
+            }
+
+            if (editingIndex === -1) {
+                // Add new
+                examData[currentSubject].push({ title, url });
+            } else {
+                // Update existing
+                examData[currentSubject][editingIndex] = { title, url };
+            }
+
+            renderPDFList();
+            
+            // Reset
+            document.getElementById('new-pdf-title').value = '';
+            document.getElementById('new-pdf-url').value = '';
+            adminArea.style.display = 'none';
+            editingIndex = -1;
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(e) { if (e.target == modal) closeModal(); };
+        window.onkeydown = function(e) { if (e.key === 'Escape') closeModal(); };
+    </script>
+</body>
+</html>
