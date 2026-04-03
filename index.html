@@ -249,11 +249,22 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    const firebaseConfig = JSON.parse(__firebase_config);
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'nebula-ws-app';
+    // ご指定のFirebase設定を直接埋め込み
+    const firebaseConfig = {
+        apiKey: "AIzaSyDYpqtMnUlfdzmfdeFX8F8gbikqy2u4Ev0",
+        authDomain: "pretest-pdf.firebaseapp.com",
+        projectId: "pretest-pdf",
+        storageBucket: "pretest-pdf.firebasestorage.app",
+        messagingSenderId: "826797467295",
+        appId: "1:826797467295:web:ad8bdf0adfbca29fa524aa",
+        measurementId: "G-1YNHBFTE21"
+    };
+
+    // プロジェクト名に合わせてappIdを設定
+    const appId = 'pretest-pdf';
     
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -270,13 +281,10 @@
     let isAdmin = false;
     let currentUser = null;
 
+    // 匿名認証フロー
     const initAuth = async () => {
         try {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
+            await signInAnonymously(auth);
         } catch (error) {
             console.error("Authentication failed:", error);
         }
@@ -291,6 +299,7 @@
 
     initAuth();
 
+    // Firestore リアルタイム同期
     const worksheetsCol = collection(db, 'artifacts', appId, 'public', 'data', 'worksheets');
 
     function startSync() {
@@ -363,12 +372,10 @@
             return;
         }
 
-        // Firestore制限（1MB）のチェック
-        const MAX_BYTES = 1000000; // 約1MB。Base64化すると約1.3倍になるため、余裕を持って設定
         if (file.size > 750000) { 
             statusMsg.style.color = "#f87171";
             statusMsg.innerText = "FILE TOO LARGE (MAX 750KB)";
-            alert("Firestoreの制限により、Base64保存できるファイルサイズは750KB以下に制限されています。これより大きいファイルを扱うにはFirebase Storageへの移行が必要です。");
+            alert("Firestoreの制限により、Base64保存できるファイルサイズは750KB以下に制限されています。");
             return;
         }
 
@@ -381,7 +388,6 @@
             reader.onload = async () => {
                 const base64Data = reader.result;
                 
-                // Base64化後のサイズチェック
                 if (base64Data.length > 1048487) {
                     throw new Error("Base64 data exceeds Firestore limit.");
                 }
